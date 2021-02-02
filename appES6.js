@@ -50,8 +50,50 @@ class UI {
         document.getElementById('isbn').value = ""
     }
 }
+class Store{
+    static getBooks(){
+        let books //simply returns an array of books in LS
+        if(localStorage.getItem(`books`) === null ){
+            books = []
+        } else {
+            books = JSON.parse(localStorage.getItem(`books`) )
+        }
+        return books
+    }
+    static displayBooks(){
+        //get books first method from this object
+        let books = Store.getBooks()
+        //for each array element use a method from UI to display it 
+        //by INSTANTIATING the UI first! and pass each book as argument
+        books.forEach((book) => {
+            const ui = new UI
+            ui.addBookToList(book)
+            //this still needs to be called after DOM is LOADED - event written below
+        })
+    }
+    static addBook(book){
+        const books = Store.getBooks()
+        books.push(book)
+        localStorage.setItem('books', JSON.stringify(books))
+        
+    }
+    static removeBook(isbn){
+        //get books from LS first
+        const books = Store.getBooks()
+        books.forEach((book, index) => {
+            //check if currently iterated book's isbn is equal to clicked target's isbn 
+            if(book.isbn === isbn){
+                //if it is, than cut it from the array using its index
+                books.splice(index, 1)
+                
+            }
+            //and push all the rest back to LS
+            localStorage.setItem('books', JSON.stringify(books))
+        })
+    }
+}
 
-
+document.addEventListener('DOMContentLoaded', Store.displayBooks) //static method
 
 //=========================  EVENT LISTENERS  ==============================
 //event listener for adding (submit)
@@ -82,6 +124,8 @@ document.getElementById('book-form').addEventListener('submit', (e) => {
         //add book to list
         ui.addBookToList(book)
         
+        //add to LS
+        Store.addBook(book)
         //clear fields
         ui.clearFields()
     }
@@ -98,7 +142,15 @@ document.getElementById('book-form').addEventListener('submit', (e) => {
         
     //INSTANTIATE UI OBJECT
     const ui = new UI()
+    //delete the book
     ui.deleteItem(e.target)
+
+    //delete from Local Storage as well
+
+    //we need a uniqe value to hold onto, so we can for example get the ISBN number.
+    //e.target is X icon, its parent is <td>, and the previous sibling of this td 
+    //is another td with ISBN number inside - we grab it and pass as argument
+    Store.removeBook(e.target.parentElement.previousElementSibling.textContent)
     //show message
     ui.showAlert(`book successfully removed`, `success`)
     })
